@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAFE MONOBOX - Interaktif</title>
+<style>
+body { font-family:'Arial', sans-serif; background:#fff; margin:0; padding:0; }
+header { background: linear-gradient(90deg, #ff0000 50%, #fff 50%); color:white; text-align:center; padding:25px 0; font-size:32px; font-weight:bold; text-shadow:1px 1px 2px #000; }
+
+.content { display:flex; flex:1; }
+.sidebar { width:220px; background:red; color:white; display:flex; flex-direction:column; padding:20px 0; flex-shrink:0; }
+.sidebar button { background:white; color:red; border:none; padding:12px 20px; text-align:left; cursor:pointer; font-size:16px; transition:0.3s; margin-bottom:5px; font-weight:bold; }
+.sidebar button:hover, .sidebar button.active { background:#ffcccc; }
+
+.main { flex:1; padding:20px; display:flex; flex-direction:column; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+.menu-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; }
+.menu { background:red; color:white; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.3); padding:10px; text-align:center; transition: transform 0.3s, box-shadow 0.3s; cursor:pointer; }
+.menu:hover { transform: scale(1.05); box-shadow:0 10px 20px rgba(0,0,0,0.5); }
+.menu img { width:100%; height:130px; object-fit:cover; border-radius:10px; }
+
+button.item-btn, #reset, #batalkanSemua, #bayar { cursor:pointer; padding:8px 12px; border:none; border-radius:5px; color:white; font-size:14px; margin-top:5px; transition:0.2s; }
+button.item-btn { background:#b30000; } button.item-btn:hover { background:#800000; }
+#reset { background:#b30000; } #reset:hover { background:#800000; }
+#batalkanSemua { background:#ff0000; } #batalkanSemua:hover { background:#990000; }
+#bayar { background:#27ae60; } #bayar:hover { background:#1e8449; }
+
+.pesanan-panel { margin-top:20px; background:#fff; padding:15px; border-radius:10px; max-width:400px; border:1px solid #ff4d4d; }
+.pesanan-panel ul { list-style:none; padding:0; margin:0; }
+.pesanan-panel li { display:flex; justify-content:space-between; align-items:center; margin:5px 0; }
+.pesanan-panel li button { background:#e74c3c; padding:2px 8px; border:none; color:white; border-radius:5px; cursor:pointer; transition:0.2s; }
+.pesanan-panel li button:hover { background:#800000; }
+#total { font-weight:bold; color:red; font-size:16px; }
+
+@media(max-width:700px){ 
+  .content { flex-direction:column; } 
+  .sidebar { width:100%; display:flex; flex-direction:row; overflow-x:auto; } 
+  .sidebar button { flex:1; text-align:center; white-space:nowrap; } 
+}
+</style>
+</head>
+<body>
+
+<header>☕ MONOBOX</header>
+
+<div class="content">
+  <div class="sidebar">
+    <button class="active" onclick="showTab('home')">Home</button>
+    <button onclick="showTab('menu')">Menu</button>
+    <button onclick="showTab('pesanan')">Pesanan</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <div class="main">
+    <div id="home" class="tab-content active">
+      <h2>Selamat Datang di Cafe Monobox!</h2>
+      <p>Pilih menu favoritmu di tab Menu dan batalkan pesanan jika berubah pikiran.</p>
+    </div>
+
+    <div id="menu" class="tab-content">
+      <div class="menu-container">
+        <div class="menu">
+          <img src="https://images.unsplash.com/photo-1601924578851-f498c2f76cd7?auto=format&fit=crop&w=400&q=80" alt="Kopi Susu">
+          <p>☕ Kopi Susu<br>Rp15.000</p>
+          <button class="item-btn" onclick="tambah('Kopi Susu',15000)">Pesan</button>
+        </div>
+        <div class="menu">
+          <img src="https://images.unsplash.com/photo-1617196036307-55b45bb8ff10?auto=format&fit=crop&w=400&q=80" alt="Nasi Lalapan">
+          <p>🍛 Nasi Lalapan<br>Rp20.000</p>
+          <button class="item-btn" onclick="tambah('Nasi Lalapan',20000)">Pesan</button>
+        </div>
+        <div class="menu">
+          <img src="https://images.unsplash.com/photo-1584270354949-31f5c99c4d5d?auto=format&fit=crop&w=400&q=80" alt="Cokelat">
+          <p>🍫 Cokelat<br>Rp18.000</p>
+          <button class="item-btn" onclick="tambah('Cokelat',18000)">Pesan</button>
+        </div>
+        <div class="menu">
+          <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=400&q=80" alt="Latte">
+          <p>🥛 Latte<br>Rp18.000</p>
+          <button class="item-btn" onclick="tambah('Latte',18000)">Pesan</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pesanan" class="tab-content">
+      <div class="pesanan-panel">
+        <h3>Pesanan Anda:</h3>
+        <ul id="list"></ul>
+        <p>Total: Rp <span id="total">0</span></p>
+        <button id="reset" onclick="resetPesanan()">🗑️ Reset Semua Pesanan</button>
+        <button id="bayar" onclick="bayarOnline()">💳 Bayar Sekarang</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let total=0, semuaPesanan=[];
+
+function showTab(tabId){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelectorAll('.sidebar button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function tambah(nama,harga){
+  const li=document.createElement("li");
+  li.textContent=nama+" - Rp"+harga.toLocaleString('id-ID');
+
+  const btnBatal=document.createElement("button");
+  btnBatal.textContent="Batalkan";
+  btnBatal.onclick=function(){ hapus(li,nama,harga); };
+
+  li.appendChild(btnBatal);
+  document.getElementById("list").appendChild(li);
+
+  semuaPesanan.push({nama,harga});
+  total+=harga;
+  document.getElementById("total").textContent=total.toLocaleString('id-ID');
+}
+
+function hapus(li,nama,harga){
+  li.remove();
+  total-=harga;
+  document.getElementById("total").textContent=total.toLocaleString('id-ID');
+  semuaPesanan=semuaPesanan.filter(i=>!(i.nama===nama&&i.harga===harga));
+}
+
+function resetPesanan(){
+  if(confirm("Apakah Anda yakin ingin menghapus semua pesanan?")){
+    document.getElementById("list").innerHTML="";
+    semuaPesanan=[]; total=0;
+    document.getElementById("total").textContent=total.toLocaleString('id-ID');
+  }
+}
+
+function bayarOnline(){
+  if(total===0){
+    alert("Belum ada pesanan untuk dibayar!");
+    return;
+  }
+
+  let items = semuaPesanan.map(i => i.nama + " Rp" + i.harga.toLocaleString('id-ID')).join("\n");
+  let text = "Pesanan:\n" + items + "\nTotal: Rp" + total.toLocaleString('id-ID');
+
+  alert("Simulasi bayar:\n" + text + "\n\nIni bisa diarahkan ke payment gateway sesungguhnya.");
+}
+
+function logout(){ alert("Logout berhasil!"); location.reload(); }
+</script>
+
+</body>
+</html>
